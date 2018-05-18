@@ -25,9 +25,10 @@ app.get('/movies/add',(req,res) => {
 });
 
 //ici je récupère une id passé en parametre pour générer de façon dynamique les routes en fonction d'un id
-app.get('/movies/:id', (req,res) => {
+app.get('/movies/:id/:title', (req,res) => {
     const id = req.params.id;
-    res.render('movie-details');
+    const title = req.params.title;
+    res.render('movie-details', {movieid: id, movietitle: title} );
 });
 
 
