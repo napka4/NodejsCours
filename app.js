@@ -1,39 +1,78 @@
-const express =  require('express'); // on requiere express
-const app = express(); // on créer l'application express !
+const express = require('express');
+const app = express();
+var favicon = require('serve-favicon');
+const bodyParser = require('body-parser');
+const multer = require('multer');
+const upload = multer();
+const path = require('path');
+const config = require('./config');
+const movieController = require('./controllers/movieController');
+const authController = require('./controllers/authController');
 
-const PORT = 3000;
+const jwt = require('jsonwebtoken');
+// to verify token on the request header
+const expressJwt = require('express-jwt');
 
-//j'utilise un middleware pour utiliser un dossier static (fichier qui vont être servie statiquement) tel que les css et autres images !
-app.use('/public', express.static('public'));
+const faker = require('faker');
+faker.locale = "fr";
 
-//je dit où se trouve mon fichier de views et mon moteur de template ici ejs
+const mongoose = require('mongoose');
+mongoose.Promise = Promise;
+mongoose.connect(`mongodb://${config.db.user}:${config.db.password}@ds241530.mlab.com:41530/expressmovie`);
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error: cannot connect to my DB'));
+db.once('open', function() {
+    console.log('connected to the DB :) ')
+});
+
+const port = 3000;
+let frenchMovies = [];
+
 app.set('views', './views');
 app.set('view engine', 'ejs');
 
-//requete http get qui demande la page accueil
-app.get('/', (req,res) => {                 // function(req,res){ res.send();} <<= ancienne notation
+// to service static files from the public folder
+app.use('/public', express.static('public'));
+
+const secret = 'qsdjS12ozehdoIJ123DJOZJLDSCqsdeffdg123ER56SDFZedhWXojqshduzaohduihqsDAqsdq';
+
+// check token on all pages except the ones mentioned in unless()
+app.use(expressJwt({ secret: secret})
+    .unless({ path: ['/', '/movies', new RegExp('/movies.*/', 'i'), '/movie-search', '/login', new RegExp('/movie-details.*/', 'i')]}));
+
+app.get('/', (req, res) => {
     res.render('index');
 });
 
-app.get('/movies', (req,res) => {
-    res.render('movies');
+app.get('/movies', movieController.getMovies);
+
+//!\ In upload.fields([]), the empty array '[]' is required
+app.post('/movies', upload.fields([]), movieController.postMovie);
+
+// create application/x-www-form-urlencoded parser
+// https://github.com/expressjs/body-parser
+var urlencodedParser = bodyParser.urlencoded({ extended: false });
+
+app.post('/movies-old-browser', urlencodedParser, movieController.getMoviesOldBrowsers);
+
+app.get('/movies/add', movieController.getMoviesAdd);
+
+app.get('/movies/:id', movieController.getMovieById);
+
+app.post('/movie-details/:id',  urlencodedParser, movieController.postMovieDetails);
+
+app.get('/movie-details/:id', movieController.getMovieDetails);
+
+app.delete('/movie-details/:id', movieController.deleteMovie)
+
+app.get('/movie-search', movieController.movieSearch);
+
+app.get('/login', authController.login);
+
+app.post('/login', urlencodedParser, authController.postLogin);
+
+app.get('/member-only', authController.getMemberOnly);
+
+app.listen(port, () => {
+    console.log(`listening on port ${port}`);
 });
-
-//on fait attention à l'ordre des routes car celle du dessous est avec un parametres / sinon conflit !
-app.get('/movies/add',(req,res) => {
-    res.send('ajouter ce film');
-});
-
-//ici je récupère une id passé en parametre pour générer de façon dynamique les routes en fonction d'un id
-app.get('/movies/:id/:title', (req,res) => {
-    const id = req.params.id;
-    const title = req.params.title;
-    res.render('movie-details', {movieid: id, movietitle: title} );
-});
-
-
-//on écoute la réponse sur le serveur local
-app.listen(PORT, () => {
-    console.log(`on écoute sur le port ${PORT}`);
-});
-
