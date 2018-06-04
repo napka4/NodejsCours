@@ -1,15 +1,109 @@
 <!DOCTYPE html>
-<html lang=""fr-fr>
-<head>
-    <meta charset="utf-8">
-    <title>Movie Express</title>
-    <link rel="stylesheet" href="../public/style.css">
-</head>
-<body>
-<h1>Les films :</h1>
-<div>
-    Who can experience the definition and uniqueness of a spirit if he has the new heaven of the believer?
-    Be atomic for whoever occurs, because each has been heared with sex. The therapist desires core which is not honorable.
-</div>
-</body>
+	<html lang="fr">
+	<% include ./partials/head %>
+	<body>
+		<% include ./partials/header %>
+
+		<div class="central">
+			<h1><%= title %></h1>
+						
+			<div class="french-movies">
+				<% for(movie of movies) { %>
+				<div><a href="/movie-details/<%= movie._id %>"><%= movie.movietitle %> (<%= movie.movieyear %>) - Auteur : <%= movie.author %> - Genre : <%= movie.genre %></a></div>
+				<% } %>
+			</div>
+			<br>
+			<div>
+				<form action="/movies" method="post">
+					<legend>Ajouter un livre</legend>
+					<label for="movietitle">Titre du livre</label>
+					<input type="text" name="movietitle" id="movietitle">
+					<label for="movieyear">Année du livre</label>
+					<input type="text" name="movieyear" id="movieyear">
+					<label for="author">Auteur du livre</label>
+					<input type="text" name="author" id="author">
+					<label for="genre">Genre du livre</label>
+					<input type="text" name="genre" id="genre">
+					<button type="submit">ajouter</button>
+				</form>
+			</div>
+		</div>
+
+		<footer>
+			<% include ./partials/footer %>
+		</footer>
+		<script>
+			const form = document.querySelector('form');
+			form.addEventListener("submit", addMovie);
+
+			function addMovie(event) {
+				if(window.fetch) {
+					addMovieUsingFetch(event);
+				} else {
+					addMovieUsingXHR(event);
+				}
+			}
+
+			function addMovieUsingFetch(event) {
+				console.log('using addMovieUsingFetch()');
+				event.preventDefault();
+
+				fetch('/movies', {
+					method: 'POST',
+					body: new FormData(form)
+				})
+				.then(checkStatus)
+				.catch(function(error) {
+					console.log('request failed', error)
+				});
+			}
+
+			function checkStatus(response) {
+				if (response.status >= 200 && response.status < 300) {
+					let newMovieDiv = document.createElement('div');
+					const movietitle = document.getElementById('movietitle').value;
+					const movieyear = document.getElementById('movieyear').value;
+					const author = document.getElementById('author').value;
+					const genre = document.getElementById('genre').value;
+					newMovieDiv.innerHTML = `${movietitle} (${movieyear}) - Auteur: ${author} - Genre : ${genre}`;
+					document.querySelector('.french-movies').appendChild(newMovieDiv);
+					form.reset();
+
+				} else {
+					const error = new Error(response.statusText);
+					error.response = response;
+					throw error;
+				}
+			}
+
+			function addMovieUsingXHR(event) {
+				// this browser does NOT support fetch. Fall back to XHR
+				event.preventDefault();
+				console.log('using addMovieUsingXHR()');
+
+				// https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/send
+				var xhr = new XMLHttpRequest();
+				xhr.open("POST", '/movies-old-browser', true);
+
+				//Send the proper header information along with the request
+				xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+				xhr.onreadystatechange = function() {//Call a function when the state changes.
+					if(xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) {
+
+						form.reset();
+					}
+				}
+				// https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects
+				console.log('form: ', form);
+				var movietitle = document.getElementById('movietitle').value;
+				var movieyear = document.getElementById('movieyear').value;
+				var author = document.getElementById('author').value;
+				var genre = document.getElementById('genre').value;
+
+				var payLoad = "movietitle=" + movietitle + "&" + "movieyear=" + movieyear + "author=" + author + "genre=" + genre;
+				xhr.send(payLoad);
+			}
+		</script>
+	</body>
 </html>

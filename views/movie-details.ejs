@@ -1,17 +1,48 @@
 <!DOCTYPE html>
-<html lang=""fr-fr>
-<head>
-    <meta charset="utf-8">
-    <title>Movie Express</title>
-    <link rel="stylesheet" href="../public/style.css">
-</head>
-<body>
-<h1>En savoir plus sur <%= movietitle %></h1>
-<div>
-    <h2><%= movieid %></h2>
-    <p>Lorem Salu bissame ! Wie geht's les samis ? Hans apporte moi une Wurschtsalad avec un picon bitte, s'il te plaît.
-        Voss ? Une Carola et du Melfor ? Yo dû, espèce de Knäckes, ch'ai dit un picon !</p>
-    <p>Hopla vous savez que la mamsell Huguette, la miss Miss Dahlias du messti de Bischheim était au Christkindelsmärik en compagnie de Richard Schirmeck (celui qui a un blottkopf), le mari de Chulia Roberstau, qui lui trempait sa Nüdle dans sa Schneck ! Yo dû, Pfourtz ! Ch'espère qu'ils avaient du Kabinetpapier, Gal !</p>
-</div>
-</body>
+	<html lang="fr">
+	<% include ./partials/head %>    
+	<body>
+		<% include ./partials/header %>
+		
+		<div class="central">
+        	<h1><%= movie.movietitle %></h1>
+			<div>
+				<form action="/movie-details/<%= movie._id %>" method="post">
+					<legend>Modifier le livre</legend>
+					<label for="movietitle">Titre du livre</label>
+					<input type="text" name="movietitle" id="movietitle" value="<%= movie.movietitle %>">
+					<label for="movieyear">Année du livre</label>
+					<input type="text" name="movieyear" id="movieyear" value="<%= movie.movieyear %>">
+					<label for="author">Auteur du livre</label>
+					<input type="text" name="author" id="author" value="<%= movie.author %>">
+					<label for="author">Genre du livre</label>
+					<input type="text" name="genre" id="genre" value="<%= movie.genre %>">
+					<button type="submit">Mettre à jour</button>
+				</form>
+				<button id="btnSuppr">Vire-moi ça !</button>
+			</div>
+		</div>
+		<footer>
+			<% include ./partials/footer %>
+		</footer>
+
+		<script>
+			let btnSuppr = document.getElementById('btnSuppr');
+			btnSuppr.addEventListener('click', deleteDocument);
+
+			function deleteDocument() {
+				var movieId = <%- JSON.stringify(movie._id) %>;
+				var url = '/movie-details/' + movieId;
+
+				axios.delete(url)
+					.then(function (response) {
+					window.location = '/movies';
+                })
+					.catch(function (error) {
+						console.error(error);
+                    });
+            }
+		</script>
+
+	</body>	
 </html>
